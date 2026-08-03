@@ -1,0 +1,41 @@
+from django.contrib import admin
+
+from .models import DiscipleshipStage, GroupMembership, Member, Ministry, School
+
+
+@admin.register(Member)
+class MemberAdmin(admin.ModelAdmin):
+    list_display = (
+        "first_name", "last_name", "gender", "year_level", "school",
+        "ministry_list", "discipleship_stage", "updated_at",
+    )
+    list_filter = ("gender", "year_level", "school", "discipleship_stage")
+    search_fields = ("first_name", "last_name")
+    filter_horizontal = ("ministries",)
+
+    @admin.display(description="Ministries")
+    def ministry_list(self, obj):
+        return ", ".join(m.name for m in obj.ministries.all())
+
+
+@admin.register(GroupMembership)
+class GroupMembershipAdmin(admin.ModelAdmin):
+    list_display = ("member", "group", "role_in_group", "attendance_status", "status_updated_at")
+    list_filter = ("role_in_group", "attendance_status", "group")
+    search_fields = ("member__first_name", "member__last_name", "group__name")
+
+
+@admin.register(DiscipleshipStage)
+class DiscipleshipStageAdmin(admin.ModelAdmin):
+    list_display = ("name", "order")
+    ordering = ("order",)
+
+
+@admin.register(Ministry)
+class MinistryAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+
+
+@admin.register(School)
+class SchoolAdmin(admin.ModelAdmin):
+    list_display = ("name",)
