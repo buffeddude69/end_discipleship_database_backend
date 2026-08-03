@@ -110,7 +110,7 @@ if os.environ.get('DATABASE_URL'):
     # connection string -- easiest to paste as one env var.
     DATABASES = {
         'default': dj_database_url.parse(
-            os.environ['postgresql://postgres:encdatabase2026@db.ndcfduvgunmeiumauybb.supabase.co:5432/postgres'], conn_max_age=600, ssl_require=True
+            os.environ['DATABASE_URL'], conn_max_age=600, ssl_require=True
         )
     }
 else:
