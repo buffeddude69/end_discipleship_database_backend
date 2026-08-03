@@ -105,7 +105,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 import dj_database_url
 
-if os.environ.get('postgresql://postgres:encdatabase2026@db.ndcfduvgunmeiumauybb.supabase.co:5432/postgres'):
+if os.environ.get('DATABASE_URL'):
     # Supabase (and most managed Postgres providers) give you a single
     # connection string -- easiest to paste as one env var.
     DATABASES = {
