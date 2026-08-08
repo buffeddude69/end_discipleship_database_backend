@@ -71,6 +71,10 @@ class Member(models.Model):
         MALE = "male", "Male"
         FEMALE = "female", "Female"
 
+    class Role(models.TextChoices):
+        MEMBER = "member", "Member"
+        INTERN = "intern", "Intern"
+
     class YearLevel(models.TextChoices):
         ELEMENTARY = "elementary", "Elementary"
         GRADE_7 = "grade_7", "Grade 7"
@@ -90,6 +94,12 @@ class Member(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=Gender.choices)
+    role = models.CharField(
+        max_length=10, choices=Role.choices, default=Role.MEMBER,
+        help_text="Whether this person is a regular member or an intern being developed. "
+                  "People who are already Leaders have their own Leader account instead of "
+                  "a Member profile, so 'Leader' isn't an option here.",
+    )
     year_level = models.CharField(max_length=20, choices=YearLevel.choices)
     school = models.ForeignKey(
         School, on_delete=models.PROTECT, related_name="members",
@@ -125,16 +135,12 @@ class Member(models.Model):
 
 class GroupMembership(models.Model):
     """
-    Links a Member profile to a Group, with details specific to that
-    group (their role there, and their attendance for the current
-    month). A member can belong to more than one group at once
-    (e.g. a small group AND a leadership group).
+    Links a Member profile to a Group, tracking their attendance for the
+    current month within that group. A member can belong to more than
+    one group at once (e.g. a small group AND a leadership group).
+    Their role (member/intern/leader) lives on the Member profile
+    itself, not here -- it's one designation per person, not per group.
     """
-
-    class RoleInGroup(models.TextChoices):
-        MEMBER = "member", "Member"
-        INTERN = "intern", "Intern"
-        LEADER = "leader", "Leader"
 
     class AttendanceStatus(models.TextChoices):
         NEW = "new", "New (joined this month)"
@@ -144,7 +150,6 @@ class GroupMembership(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="memberships")
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="memberships")
 
-    role_in_group = models.CharField(max_length=10, choices=RoleInGroup.choices)
     attendance_status = models.CharField(max_length=10, choices=AttendanceStatus.choices)
 
     date_joined_group = models.DateField(auto_now_add=True)
@@ -157,4 +162,4 @@ class GroupMembership(models.Model):
         ordering = ["member__last_name", "member__first_name"]
 
     def __str__(self):
-        return f"{self.member} in {self.group} ({self.get_role_in_group_display()})"
+        return f"{self.member} in {self.group}"

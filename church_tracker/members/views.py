@@ -51,6 +51,10 @@ class MemberViewSet(viewsets.ModelViewSet):
         if school_id:
             qs = qs.filter(school_id=school_id)
 
+        role = self.request.query_params.get("role")
+        if role:
+            qs = qs.filter(role=role)
+
         needs_update = self.request.query_params.get("needs_update")
         if needs_update == "true":
             year, month = _current_month_bounds()
@@ -88,9 +92,9 @@ class GroupMembershipViewSet(viewsets.ModelViewSet):
         if attendance_status:
             qs = qs.filter(attendance_status=attendance_status)
 
-        role_in_group = self.request.query_params.get("role_in_group")
-        if role_in_group:
-            qs = qs.filter(role_in_group=role_in_group)
+        role = self.request.query_params.get("role")
+        if role:
+            qs = qs.filter(member__role=role)
 
         school_id = self.request.query_params.get("school")
         if school_id:
@@ -143,12 +147,12 @@ class DashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def get(self, request):
+        User = request.user.__class__
         memberships = GroupMembership.objects.select_related("member", "member__school", "group", "group__leader")
 
         by_role = {
-            "member": memberships.filter(role_in_group="member").count(),
-            "intern": memberships.filter(role_in_group="intern").count(),
-            "leader": memberships.filter(role_in_group="leader").count(),
+            "member": Member.objects.filter(role="member").count(),
+            "intern": Member.objects.filter(role="intern").count(),
         }
 
         by_status = {
@@ -164,16 +168,24 @@ class DashboardView(APIView):
                 by_school[school.name] = count
 
         by_area = {}
-        for area_value, area_label in request.user.__class__.Area.choices:
+        for area_value, area_label in User.Area.choices:
             count = memberships.filter(group__leader__area=area_value).distinct().values("member").count()
             if count:
                 by_area[area_label] = count
 
+        leaders_by_area = {}
+        for area_value, area_label in User.Area.choices:
+            count = User.objects.filter(area=area_value).count()
+            if count:
+                leaders_by_area[area_label] = count
+
         return Response({
             "total_members": Member.objects.count(),
             "total_memberships": memberships.count(),
+            "total_leaders": User.objects.count(),
             "by_role": by_role,
             "by_attendance_status": by_status,
             "by_school": by_school,
             "by_area": by_area,
+            "leaders_by_area": leaders_by_area,
         })

@@ -6,10 +6,10 @@ from .models import DiscipleshipStage, GroupMembership, Member, Ministry, School
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
     list_display = (
-        "first_name", "last_name", "gender", "year_level", "school",
+        "first_name", "last_name", "role", "gender", "year_level", "school",
         "ministry_list", "discipleship_stage", "updated_at",
     )
-    list_filter = ("gender", "year_level", "school", "discipleship_stage")
+    list_filter = ("role", "gender", "year_level", "school", "discipleship_stage")
     search_fields = ("first_name", "last_name")
     filter_horizontal = ("ministries",)
 
@@ -20,8 +20,8 @@ class MemberAdmin(admin.ModelAdmin):
 
 @admin.register(GroupMembership)
 class GroupMembershipAdmin(admin.ModelAdmin):
-    list_display = ("member", "group", "role_in_group", "attendance_status", "status_updated_at")
-    list_filter = ("role_in_group", "attendance_status", "group")
+    list_display = ("member", "group", "attendance_status", "status_updated_at")
+    list_filter = ("attendance_status", "group")
     search_fields = ("member__first_name", "member__last_name", "group__name")
 
 

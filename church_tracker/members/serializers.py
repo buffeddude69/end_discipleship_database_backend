@@ -37,7 +37,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
-            "id", "first_name", "last_name", "gender", "year_level",
+            "id", "first_name", "last_name", "gender", "role", "year_level",
             "school", "school_name",
             "is_in_ministry", "ministries", "ministry_names",
             "discipleship_stage", "discipleship_stage_name",
@@ -95,7 +95,7 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
         model = GroupMembership
         fields = [
             "id", "group", "group_name", "member", "member_detail",
-            "role_in_group", "attendance_status",
+            "attendance_status",
             "date_joined_group", "status_updated_at", "needs_update",
         ]
         read_only_fields = ["id", "date_joined_group", "status_updated_at"]
