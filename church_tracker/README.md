@@ -32,6 +32,14 @@ members/      Member model (people led within a group) + DiscipleshipStage looku
    python manage.py runserver
    ```
 
+**Note:** `requirements.txt` includes a few production-only packages
+(`django-storages`, `whitenoise`, `dj-database-url`, `gunicorn`) used for
+deployment. `settings.py` is written so the app runs fine locally without
+these installed at all -- they only activate when their related env vars
+(`DATABASE_URL`, `SUPABASE_S3_ENDPOINT_URL`, etc.) are actually set. If you
+want the leanest possible local setup, you can skip installing those five
+and just install the "Core" section of `requirements.txt`.
+
 ## Media storage (profile pictures, remarks photos)
 
 By default, uploaded photos save to a local `media/` folder -- fine for

@@ -10,10 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import importlib.util
 import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Checked early so INSTALLED_APPS / MIDDLEWARE below can conditionally
+# include production-only packages -- keeps local dev from ever needing
+# them installed, while production (Render, with these env vars set)
+# gets the full feature set.
+USE_SUPABASE_STORAGE = bool(os.environ.get('SUPABASE_S3_ENDPOINT_URL'))
+HAS_WHITENOISE = importlib.util.find_spec('whitenoise') is not None
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,11 +54,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'storages',
     'accounts',
     'groups',
     'members',
 ]
+
+if USE_SUPABASE_STORAGE:
+    INSTALLED_APPS.append('storages')
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -74,7 +84,12 @@ CORS_ALLOWED_ORIGINS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+if HAS_WHITENOISE:
+    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+
+MIDDLEWARE += [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,11 +121,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-import dj_database_url
-
 if os.environ.get('DATABASE_URL'):
     # Supabase (and most managed Postgres providers) give you a single
-    # connection string -- easiest to paste as one env var.
+    # connection string -- easiest to paste as one env var. Import is
+    # deliberately inside this branch, so local dev (which uses the
+    # discrete DB_* vars below instead) never needs this package installed.
+    import dj_database_url
+
     DATABASES = {
         'default': dj_database_url.parse(
             os.environ['DATABASE_URL'], conn_max_age=0, ssl_require=True
@@ -122,7 +139,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('DB_NAME', 'church_tracker'),
             'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres123'),
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
         }
@@ -168,8 +185,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': (
+            'whitenoise.storage.CompressedManifestStaticFilesStorage'
+            if HAS_WHITENOISE
+            else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+        ),
     },
 }
 

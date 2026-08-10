@@ -121,7 +121,6 @@ class Member(models.Model):
         blank=True, help_text="An encouraging note or story about this member, from their leader."
     )
     remarks_photo = models.ImageField(upload_to="member_remarks/", blank=True, null=True)
-    profile_picture = models.ImageField(upload_to="member_profiles/", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

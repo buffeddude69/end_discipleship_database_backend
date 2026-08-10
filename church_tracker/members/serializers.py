@@ -41,7 +41,7 @@ class MemberSerializer(serializers.ModelSerializer):
             "school", "school_name",
             "is_in_ministry", "ministries", "ministry_names",
             "discipleship_stage", "discipleship_stage_name",
-            "remarks", "remarks_photo", "profile_picture",
+            "remarks", "remarks_photo",
             "needs_update", "group_names",
             "created_at", "updated_at",
         ]
