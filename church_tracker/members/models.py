@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from groups.models import Group
@@ -134,11 +135,18 @@ class Member(models.Model):
 
 class GroupMembership(models.Model):
     """
-    Links a Member profile to a Group, tracking their attendance for the
-    current month within that group. A member can belong to more than
+    Links a *person* to a Group, tracking their attendance for the
+    current month within that group. A person can belong to more than
     one group at once (e.g. a small group AND a leadership group).
-    Their role (member/intern/leader) lives on the Member profile
-    itself, not here -- it's one designation per person, not per group.
+
+    That person is either:
+    - a Member profile (a regular member or intern being discipled), or
+    - a Leader account (someone who already has their own login --
+      common in a leadership group, where the "members" are often
+      other leaders being developed further).
+
+    Exactly one of `member` / `leader` is set, never both, never
+    neither -- enforced both at the database level and in the API.
     """
 
     class AttendanceStatus(models.TextChoices):
@@ -147,7 +155,14 @@ class GroupMembership(models.Model):
         INACTIVE = "inactive", "Inactive (no attendance this month)"
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="memberships")
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="memberships")
+    member = models.ForeignKey(
+        Member, on_delete=models.CASCADE, related_name="memberships", null=True, blank=True
+    )
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="group_memberships",
+        null=True, blank=True,
+        help_text="Set this instead of 'member' when the person being added already has a Leader account.",
+    )
 
     attendance_status = models.CharField(max_length=10, choices=AttendanceStatus.choices)
 
@@ -157,8 +172,18 @@ class GroupMembership(models.Model):
     status_updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ["group", "member"]
-        ordering = ["member__last_name", "member__first_name"]
+        unique_together = [["group", "member"], ["group", "leader"]]
+        ordering = ["member__last_name", "member__first_name", "leader__last_name", "leader__first_name"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(member__isnull=False, leader__isnull=True)
+                    | models.Q(member__isnull=True, leader__isnull=False)
+                ),
+                name="groupmembership_exactly_one_of_member_or_leader",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.member} in {self.group}"
+        person = self.member or self.leader
+        return f"{person} in {self.group}"

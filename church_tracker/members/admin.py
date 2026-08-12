@@ -20,9 +20,19 @@ class MemberAdmin(admin.ModelAdmin):
 
 @admin.register(GroupMembership)
 class GroupMembershipAdmin(admin.ModelAdmin):
-    list_display = ("member", "group", "attendance_status", "status_updated_at")
+    list_display = ("person", "group", "attendance_status", "status_updated_at")
     list_filter = ("attendance_status", "group")
-    search_fields = ("member__first_name", "member__last_name", "group__name")
+    search_fields = (
+        "member__first_name", "member__last_name",
+        "leader__first_name", "leader__last_name",
+        "group__name",
+    )
+
+    @admin.display(description="Person")
+    def person(self, obj):
+        person = obj.member or obj.leader
+        tag = " (Leader)" if obj.leader_id else ""
+        return f"{person}{tag}"
 
 
 @admin.register(DiscipleshipStage)

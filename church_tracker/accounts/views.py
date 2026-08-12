@@ -54,11 +54,13 @@ class MeView(generics.RetrieveUpdateAPIView):
 
 class LeaderListView(generics.ListAPIView):
     """
-    Staff-only: list every leader account, so a coordinator can see
-    who's who and assign/filter groups by leader.
+    Any authenticated leader can list/search leader accounts -- needed
+    so a leader can find and add another leader to their group's
+    roster (common for leadership groups). Staff additionally get to
+    use this to assign group ownership.
     """
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated, IsStaff]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = User.objects.all().order_by("first_name", "last_name")
@@ -76,3 +78,10 @@ class LeaderListView(generics.ListAPIView):
             qs = qs.filter(leader_role=leader_role)
 
         return qs
+
+
+class LeaderDetailView(generics.RetrieveAPIView):
+    """Any authenticated leader can view another leader's profile."""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = User.objects.all()

@@ -1,7 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
+from accounts.serializers import UserSerializer
 from .models import DiscipleshipStage, GroupMembership, Member, Ministry, School
+
+User = get_user_model()
 
 
 class MinistrySerializer(serializers.ModelSerializer):
@@ -83,29 +87,78 @@ class MemberSerializer(serializers.ModelSerializer):
 
 class GroupMembershipSerializer(serializers.ModelSerializer):
     """
-    Links an existing Member profile to a Group. Used both when adding
-    a member to a group (picking an existing profile, or one just
-    created) and when updating their monthly attendance status.
+    Links a person to a Group -- either an existing Member profile, or
+    an existing Leader account (common for leadership groups, whose
+    "members" are often other leaders). Used both when adding someone
+    to a group and when updating their monthly attendance status.
     """
     member_detail = MemberSerializer(source="member", read_only=True)
+    leader = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
+    leader_detail = UserSerializer(source="leader", read_only=True)
     group_name = serializers.CharField(source="group.name", read_only=True)
     needs_update = serializers.SerializerMethodField()
+    person_name = serializers.SerializerMethodField()
+    person_type = serializers.SerializerMethodField()
 
     class Meta:
         model = GroupMembership
         fields = [
-            "id", "group", "group_name", "member", "member_detail",
+            "id", "group", "group_name",
+            "member", "member_detail", "leader", "leader_detail",
+            "person_name", "person_type",
             "attendance_status",
             "date_joined_group", "status_updated_at", "needs_update",
         ]
         read_only_fields = ["id", "date_joined_group", "status_updated_at"]
+        extra_kwargs = {"member": {"required": False, "allow_null": True}}
+        # DRF auto-generates a UniqueTogetherValidator per unique_together
+        # tuple on the model. For ["group", "leader"], that validator force-
+        # requires "leader" on every submission (even a member-only one),
+        # which breaks the "exactly one of member/leader" design. Our own
+        # validate() below already handles duplicate-membership checking
+        # correctly, so we disable the auto-generated ones here. The model's
+        # unique_together and CheckConstraint still protect data integrity
+        # at the database level regardless.
+        validators = []
 
     def get_needs_update(self, obj):
         now = timezone.now()
         return not (obj.status_updated_at.year == now.year and obj.status_updated_at.month == now.month)
+
+    def get_person_name(self, obj):
+        person = obj.member or obj.leader
+        return f"{person.first_name} {person.last_name}" if person else ""
+
+    def get_person_type(self, obj):
+        return "leader" if obj.leader_id else "member"
 
     def validate_group(self, group):
         request = self.context["request"]
         if not request.user.is_staff and group.leader_id != request.user.id:
             raise serializers.ValidationError("You can only manage members in your own group.")
         return group
+
+    def validate(self, attrs):
+        member = attrs.get("member", getattr(self.instance, "member", None))
+        leader = attrs.get("leader", getattr(self.instance, "leader", None))
+
+        if member and leader:
+            raise serializers.ValidationError(
+                "Choose either an existing member profile or a leader account, not both."
+            )
+        if not member and not leader:
+            raise serializers.ValidationError(
+                "Choose an existing member profile or a leader account to add to this group."
+            )
+
+        group = attrs.get("group", getattr(self.instance, "group", None))
+        qs = GroupMembership.objects.filter(group=group)
+        qs = qs.filter(member=member) if member else qs.filter(leader=leader)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("This person is already in this group.")
+
+        return attrs

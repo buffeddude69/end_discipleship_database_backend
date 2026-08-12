@@ -69,8 +69,8 @@ class MemberViewSet(viewsets.ModelViewSet):
 
 class GroupMembershipViewSet(viewsets.ModelViewSet):
     """
-    Links a Member profile to a Group with group-specific info: role,
-    and this month's attendance status.
+    Links a person (Member profile or Leader account) to a Group, with
+    this month's attendance status.
     """
     serializer_class = GroupMembershipSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -78,7 +78,7 @@ class GroupMembershipViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = GroupMembership.objects.select_related(
-            "group", "member", "member__school", "member__discipleship_stage"
+            "group", "member", "member__school", "member__discipleship_stage", "leader"
         ).prefetch_related("member__ministries")
 
         if not user.is_staff:
@@ -93,7 +93,9 @@ class GroupMembershipViewSet(viewsets.ModelViewSet):
             qs = qs.filter(attendance_status=attendance_status)
 
         role = self.request.query_params.get("role")
-        if role:
+        if role == "leader":
+            qs = qs.filter(leader__isnull=False)
+        elif role:
             qs = qs.filter(member__role=role)
 
         school_id = self.request.query_params.get("school")
@@ -108,6 +110,7 @@ class GroupMembershipViewSet(viewsets.ModelViewSet):
         if search:
             qs = qs.filter(
                 Q(member__first_name__icontains=search) | Q(member__last_name__icontains=search)
+                | Q(leader__first_name__icontains=search) | Q(leader__last_name__icontains=search)
             )
 
         needs_update = self.request.query_params.get("needs_update")
