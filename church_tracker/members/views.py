@@ -136,10 +136,14 @@ class MinistryViewSet(viewsets.ModelViewSet):
 
 
 class SchoolViewSet(viewsets.ModelViewSet):
-    """Any authenticated leader can view; only staff can add/edit/delete schools."""
+    """
+    Publicly readable (the registration form, which runs before a leader
+    has an account, needs to show the school list). Only staff can
+    add/edit/delete.
+    """
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
-    permission_classes = [permissions.IsAuthenticated, IsStaffOrReadOnly]
+    permission_classes = [IsStaffOrReadOnly]
 
 
 class DashboardView(APIView):

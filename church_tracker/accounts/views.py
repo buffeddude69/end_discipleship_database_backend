@@ -22,11 +22,18 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        user = User.objects.get(id=response.data["id"])
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
-        response.data["token"] = token.key
-        return response
+        # Respond with the same {token, user} shape as /login/, using the
+        # full UserSerializer (not the registration-input serializer) --
+        # otherwise the frontend's in-memory user object is missing fields
+        # like groups_led/school_name until the next page load re-fetches it.
+        return Response(
+            {"token": token.key, "user": UserSerializer(user).data},
+            status=201,
+        )
 
 
 class LoginView(ObtainAuthToken):

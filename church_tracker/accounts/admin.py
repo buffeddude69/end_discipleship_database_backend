@@ -6,10 +6,17 @@ from .models import User
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
-        ("Leader Info", {"fields": ("leader_role", "demography", "gender", "contact_number")}),
+        ("Leader Info", {
+            "fields": ("leader_role", "demography", "gender", "area", "contact_number"),
+        }),
+        ("Student Status (shown when demography is High School or College)", {
+            "fields": ("year_level", "school"),
+        }),
     )
-    list_display = ("username", "first_name", "last_name", "leader_role", "gender", "is_active")
-    list_filter = ("leader_role", "demography", "gender")
+    list_display = (
+        "username", "first_name", "last_name", "leader_role", "area", "is_student", "is_active",
+    )
+    list_filter = ("leader_role", "demography", "gender", "area")
 
 
 admin.site.register(User, UserAdmin)
