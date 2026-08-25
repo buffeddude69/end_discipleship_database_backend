@@ -23,7 +23,7 @@ class DiscipleshipStageSerializer(serializers.ModelSerializer):
 class SchoolSerializer(serializers.ModelSerializer):
     class Meta:
         model = School
-        fields = ["id", "name"]
+        fields = ["id", "name", "area", "demography"]
 
 
 class MemberSerializer(serializers.ModelSerializer):

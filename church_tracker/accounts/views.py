@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 
-from .serializers import UserRegistrationSerializer, UserSerializer
+from .serializers import ChangePasswordSerializer, UserRegistrationSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -16,10 +16,14 @@ class IsStaff(permissions.BasePermission):
 
 
 class RegisterView(generics.CreateAPIView):
-    """Public endpoint for a new group leader to create their account."""
+    """
+    Staff-only endpoint for creating a new leader account. This app is
+    for internal organization use, so accounts aren't self-service --
+    a staff/coordinator creates each leader's account for them.
+    """
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated, IsStaff]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -57,6 +61,30 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    """
+    Lets a logged-in leader change their own password -- e.g. after
+    staff creates their account with a temporary one. Also rotates
+    their auth token, so any old copy of it (e.g. a temp password
+    shared insecurely) stops working immediately.
+    """
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.save()
+
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
+
+        return Response({"token": token.key, "detail": "Password changed successfully."})
 
 
 class LeaderListView(generics.ListAPIView):

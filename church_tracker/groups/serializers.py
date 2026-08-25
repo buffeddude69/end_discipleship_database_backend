@@ -12,6 +12,7 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = [
             "id", "name", "leader", "leader_name", "group_type",
+            "demography", "demography_other",
             "gender_composition", "meeting_frequency", "meeting_frequency_note",
             "meeting_day", "meeting_time", "venue", "is_active",
             "member_count", "active_member_count",
@@ -22,3 +23,12 @@ class GroupSerializer(serializers.ModelSerializer):
 
     def get_active_member_count(self, obj):
         return obj.memberships.filter(attendance_status="active").count()
+
+    def validate(self, attrs):
+        demography = attrs.get("demography", getattr(self.instance, "demography", None))
+        demography_other = attrs.get("demography_other", getattr(self.instance, "demography_other", ""))
+        if demography == "others" and not demography_other.strip():
+            raise serializers.ValidationError(
+                "Please specify the demography when 'Others' is selected."
+            )
+        return attrs

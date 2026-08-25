@@ -51,6 +51,14 @@ class School(models.Model):
     """
 
     name = models.CharField(max_length=200, unique=True)
+    area = models.CharField(
+        max_length=100, blank=True,
+        help_text="Free text -- e.g. 'Nuvali', 'Santa Rosa City'.",
+    )
+    demography = models.CharField(
+        max_length=100, blank=True,
+        help_text="Free text -- e.g. 'College', 'High School', 'Mixed'.",
+    )
 
     class Meta:
         ordering = ["name"]

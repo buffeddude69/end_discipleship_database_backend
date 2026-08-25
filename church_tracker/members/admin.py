@@ -48,4 +48,5 @@ class MinistryAdmin(admin.ModelAdmin):
 
 @admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ("name",)
+    list_display = ("name", "area", "demography")
+    search_fields = ("name", "area", "demography")

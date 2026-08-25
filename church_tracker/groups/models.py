@@ -33,6 +33,12 @@ class Group(models.Model):
         SATURDAY = "saturday", "Saturday"
         SUNDAY = "sunday", "Sunday"
 
+    class GroupDemography(models.TextChoices):
+        HIGH_SCHOOL = "high_school", "High School"
+        COLLEGE = "college", "College"
+        MIXED = "mixed", "Mixed"
+        OTHERS = "others", "Others"
+
     name = models.CharField(max_length=150)
     leader = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -40,6 +46,14 @@ class Group(models.Model):
         related_name="groups_led",
     )
     group_type = models.CharField(max_length=20, choices=GroupType.choices)
+    demography = models.CharField(
+        max_length=20, choices=GroupDemography.choices, default=GroupDemography.MIXED,
+        help_text="What kind of group this is, demographically.",
+    )
+    demography_other = models.CharField(
+        max_length=100, blank=True,
+        help_text="Required when demography is 'Others' -- describe it.",
+    )
     gender_composition = models.CharField(
         max_length=10, choices=GenderComposition.choices, default=GenderComposition.MIXED
     )
