@@ -131,6 +131,15 @@ class Member(models.Model):
     )
     remarks_photo = models.ImageField(upload_to="member_remarks/", blank=True, null=True)
 
+    is_doing_one_on_one = models.BooleanField(
+        default=False,
+        help_text="Whether this person is currently doing a One2One discipleship meeting with someone.",
+    )
+    one_on_one_with = models.CharField(
+        max_length=150, blank=True,
+        help_text="Name of who they're doing One2One with. Required if is_doing_one_on_one is set.",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

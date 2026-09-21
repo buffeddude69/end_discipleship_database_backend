@@ -62,6 +62,15 @@ class User(AbstractUser):
         help_text="Required when demography is High School or College.",
     )
 
+    is_doing_one_on_one = models.BooleanField(
+        default=False,
+        help_text="Whether this leader is currently doing a One2One discipleship meeting with someone.",
+    )
+    one_on_one_with = models.CharField(
+        max_length=150, blank=True,
+        help_text="Name of who they're doing One2One with. Required if is_doing_one_on_one is set.",
+    )
+
     STUDENT_DEMOGRAPHIES = (Demography.HIGH_SCHOOL, Demography.COLLEGE)
 
     @property

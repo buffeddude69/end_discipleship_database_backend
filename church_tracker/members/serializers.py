@@ -46,6 +46,7 @@ class MemberSerializer(serializers.ModelSerializer):
             "is_in_ministry", "ministries", "ministry_names",
             "discipleship_stage", "discipleship_stage_name",
             "remarks", "remarks_photo",
+            "is_doing_one_on_one", "one_on_one_with",
             "needs_update", "group_names",
             "created_at", "updated_at",
         ]
@@ -162,3 +163,24 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This person is already in this group.")
 
         return attrs
+
+    def _touch_member(self, instance):
+        # Updating someone's attendance status in a group is a real,
+        # meaningful review of that person -- it should count as "checked
+        # on them this month" from the Members list's point of view too,
+        # not just within this one group. Without this, the two "needs
+        # update" indicators (profile vs. per-group attendance) drift out
+        # of sync, which is confusing since a leader reasonably thinks of
+        # updating someone's status as "I updated their record."
+        if instance.member_id:
+            instance.member.save(update_fields=["updated_at"])
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        self._touch_member(instance)
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        self._touch_member(instance)
+        return instance

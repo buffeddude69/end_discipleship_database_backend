@@ -34,6 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id", "username", "first_name", "last_name", "email",
             "leader_role", "demography", "gender", "area", "contact_number", "is_staff",
             "is_student", "year_level", "school", "school_name",
+            "is_doing_one_on_one", "one_on_one_with",
             "groups_led", "groups_member_of",
         ]
         read_only_fields = ["id", "is_staff"]
@@ -47,7 +48,8 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
-        return validate_student_fields(attrs, self.instance)
+        attrs = validate_student_fields(attrs, self.instance)
+        return attrs
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -71,10 +73,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "id", "username", "first_name", "last_name", "email", "password",
             "leader_role", "demography", "gender", "area", "contact_number",
             "is_student", "year_level", "school",
+            "is_doing_one_on_one", "one_on_one_with",
         ]
 
     def validate(self, attrs):
-        return validate_student_fields(attrs, self.instance)
+        attrs = validate_student_fields(attrs, self.instance)
+        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password")

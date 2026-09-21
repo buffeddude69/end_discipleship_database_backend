@@ -7,9 +7,9 @@ from .models import DiscipleshipStage, GroupMembership, Member, Ministry, School
 class MemberAdmin(admin.ModelAdmin):
     list_display = (
         "first_name", "last_name", "role", "gender", "year_level", "school",
-        "ministry_list", "discipleship_stage", "updated_at",
+        "ministry_list", "discipleship_stage", "is_doing_one_on_one", "updated_at",
     )
-    list_filter = ("role", "gender", "year_level", "school", "discipleship_stage")
+    list_filter = ("role", "gender", "year_level", "school", "discipleship_stage", "is_doing_one_on_one")
     search_fields = ("first_name", "last_name")
     filter_horizontal = ("ministries",)
 
