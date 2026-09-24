@@ -3,10 +3,6 @@ from django.db import models
 
 
 class Group(models.Model):
-    """
-    A group led by one leader: a small group, a leadership group,
-    or a campus ministry team.
-    """
 
     class GroupType(models.TextChoices):
         SMALL_GROUP = "small_group", "Small Group"
@@ -68,8 +64,6 @@ class Group(models.Model):
     venue = models.CharField(max_length=255, blank=True)
 
     # Whether the group itself is currently considered active.
-    # This can be set manually, and later derived automatically from
-    # attendance trends (e.g. no active members for N weeks -> inactive).
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

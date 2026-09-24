@@ -31,8 +31,7 @@ def _current_month_bounds():
 class MemberViewSet(viewsets.ModelViewSet):
     """
     Shared student/member profiles. Visible to every authenticated
-    leader (so they can search the roster before creating a duplicate
-    profile), editable by any authenticated leader too, since a
+    leader, editable by any authenticated leader too, since a
     profile isn't "owned" by a single group.
     """
     serializer_class = MemberSerializer
@@ -120,9 +119,11 @@ class GroupMembershipViewSet(viewsets.ModelViewSet):
 
         return qs.distinct()
 
+    """Below are only authenticated leader can view; only staff can add/edit/delete."""
+
 
 class DiscipleshipStageViewSet(viewsets.ModelViewSet):
-    """Any authenticated leader can view; only staff can add/edit/delete stages."""
+    
     queryset = DiscipleshipStage.objects.all()
     serializer_class = DiscipleshipStageSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffOrReadOnly]
@@ -137,8 +138,7 @@ class MinistryViewSet(viewsets.ModelViewSet):
 
 class SchoolViewSet(viewsets.ModelViewSet):
     """
-    Publicly readable (the registration form, which runs before a leader
-    has an account, needs to show the school list). Only staff can
+    Publicly readable. Only staff can
     add/edit/delete.
     """
     queryset = School.objects.all()
@@ -147,10 +147,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
 
 class DashboardView(APIView):
-    """
-    Staff-only analytics: headcounts by role, by school/campus, by
-    area, and this month's new/active/inactive breakdown.
-    """
+
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def get(self, request):

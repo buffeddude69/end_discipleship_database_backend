@@ -122,10 +122,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 if os.environ.get('DATABASE_URL'):
-    # Supabase (and most managed Postgres providers) give you a single
-    # connection string -- easiest to paste as one env var. Import is
-    # deliberately inside this branch, so local dev (which uses the
-    # discrete DB_* vars below instead) never needs this package installed.
+    #This DATABASE_URL is used to connect to Supabase's PostgreSQL
     import dj_database_url
 
     DATABASES = {

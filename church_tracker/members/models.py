@@ -3,14 +3,14 @@ from django.db import models
 
 from groups.models import Group
 
+"""
+Everything below here are configurable tables that only staff can modify / add.
+
+"""
+
 
 class Ministry(models.Model):
-    """
-    Configurable lookup table for ministry teams a member can serve in
-    (e.g. Music, Technical/TSM, Ushering, Prayer Team). Kept as a model
-    rather than hardcoded choices since new ministry teams get added
-    over time and shouldn't require a code change.
-    """
+
 
     name = models.CharField(max_length=100, unique=True)
 
@@ -23,12 +23,6 @@ class Ministry(models.Model):
 
 
 class DiscipleshipStage(models.Model):
-    """
-    Configurable lookup table for the ministry's discipleship journey
-    stages (e.g. New Believer, Growing, Committed, Leader-in-training).
-    Kept as a model instead of hardcoded choices because these labels
-    are specific to the organization and may change over time.
-    """
 
     name = models.CharField(max_length=100, unique=True)
     order = models.PositiveIntegerField(
@@ -43,12 +37,6 @@ class DiscipleshipStage(models.Model):
 
 
 class School(models.Model):
-    """
-    Configurable lookup table for schools/campuses a member may be
-    attending. Staff manage this list (e.g. adding a new campus),
-    rather than leaders free-typing institution names inconsistently.
-    Also used for members who aren't students (e.g. an "N/A" entry).
-    """
 
     name = models.CharField(max_length=200, unique=True)
     area = models.CharField(
@@ -68,13 +56,6 @@ class School(models.Model):
 
 
 class Member(models.Model):
-    """
-    A single shared profile for a person being discipled. This is
-    intentionally NOT owned by one group -- a person has exactly one
-    profile, and that profile can be linked to one or more groups via
-    GroupMembership. This avoids leaders accidentally creating
-    duplicate profiles for the same person across different groups.
-    """
 
     class Gender(models.TextChoices):
         MALE = "male", "Male"
@@ -151,20 +132,6 @@ class Member(models.Model):
 
 
 class GroupMembership(models.Model):
-    """
-    Links a *person* to a Group, tracking their attendance for the
-    current month within that group. A person can belong to more than
-    one group at once (e.g. a small group AND a leadership group).
-
-    That person is either:
-    - a Member profile (a regular member or intern being discipled), or
-    - a Leader account (someone who already has their own login --
-      common in a leadership group, where the "members" are often
-      other leaders being developed further).
-
-    Exactly one of `member` / `leader` is set, never both, never
-    neither -- enforced both at the database level and in the API.
-    """
 
     class AttendanceStatus(models.TextChoices):
         NEW = "new", "New (joined this month)"
